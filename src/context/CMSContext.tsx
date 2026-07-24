@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import type { Project, BlogPost, SiteSettings, ContactMessage, DashboardStats } from '@/types';
 import { generateId, slugify, getReadTime } from '@/lib/utils';
 import { defaultProjects, defaultBlogPosts, defaultSettings } from './defaultData';
+import { useToast } from '@/components/ui/Toast';
 import {
   fetchProjects,
   addProjectToFirestore,
@@ -27,44 +28,54 @@ interface CMSContextType {
   settings: SiteSettings;
   messages: ContactMessage[];
   synced: boolean;
+  firestoreConnected: boolean;
 
-  // Project CRUD
   addProject: (project: Omit<Project, 'id' | 'slug' | 'date'>) => void;
   updateProject: (id: string, project: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   getProject: (id: string) => Project | undefined;
   getProjectBySlug: (slug: string) => Project | undefined;
 
-  // Blog CRUD
   addBlogPost: (post: Omit<BlogPost, 'id' | 'slug' | 'date' | 'readTime'>) => void;
   updateBlogPost: (id: string, post: Partial<BlogPost>) => void;
   deleteBlogPost: (id: string) => void;
   getBlogPost: (id: string) => BlogPost | undefined;
   getBlogPostBySlug: (slug: string) => BlogPost | undefined;
 
-  // Settings
   updateSettings: (settings: Partial<SiteSettings>) => void;
 
-  // Messages
   addMessage: (message: Omit<ContactMessage, 'id' | 'date' | 'read'>) => void;
   markMessageRead: (id: string) => void;
   deleteMessage: (id: string) => void;
 
-  // Stats
   getStats: () => DashboardStats;
 }
 
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
+function persist(key: string, data: unknown) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* ignore */ }
+}
+
+function getLocal<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 function useCMSStore() {
+  const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [synced, setSynced] = useState(false);
+  const [firestoreConnected, setFirestoreConnected] = useState(false);
 
-  // ---- Load data on mount: Firestore first, then localStorage fallback ----
+  // ---- Load data on mount ----
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         const [fsProjects, fsPosts, fsMessages, fsSettings] = await Promise.all([
@@ -74,13 +85,19 @@ function useCMSStore() {
           fetchSettings().catch(() => null),
         ]);
 
+        if (cancelled) return;
+
+        // Check if ANY Firestore call returned data (not null)
+        const anyConnected = fsProjects !== null || fsPosts !== null || fsMessages !== null || fsSettings !== null;
+        setFirestoreConnected(anyConnected);
+
         if (fsProjects && fsProjects.length > 0) {
           setProjects(fsProjects);
           persist('cms_projects', fsProjects);
         } else {
           const local = getLocal<Project[]>('cms_projects');
           setProjects(local ?? defaultProjects);
-          if (!local && fsProjects !== null) persist('cms_projects', defaultProjects);
+          if (!local && anyConnected) persist('cms_projects', defaultProjects);
         }
 
         if (fsPosts && fsPosts.length > 0) {
@@ -89,7 +106,7 @@ function useCMSStore() {
         } else {
           const local = getLocal<BlogPost[]>('cms_blog');
           setBlogPosts(local ?? defaultBlogPosts);
-          if (!local && fsPosts !== null) persist('cms_blog', defaultBlogPosts);
+          if (!local && anyConnected) persist('cms_blog', defaultBlogPosts);
         }
 
         if (fsSettings) {
@@ -107,33 +124,28 @@ function useCMSStore() {
           const local = getLocal<ContactMessage[]>('cms_messages');
           if (local) setMessages(local);
         }
+
+        if (!anyConnected) {
+          toast('Running in local-only mode — data won\'t sync across devices', 'info');
+        }
       } catch {
-        // Firestore unavailable — load from localStorage
-        const localP = getLocal<Project[]>('cms_projects');
-        const localB = getLocal<BlogPost[]>('cms_blog');
-        const localS = getLocal<SiteSettings>('cms_settings');
-        const localM = getLocal<ContactMessage[]>('cms_messages');
-        if (localP) setProjects(localP);
-        if (localB) setBlogPosts(localB);
-        if (localS) setSettings(localS);
-        if (localM) setMessages(localM);
+        if (!cancelled) {
+          setFirestoreConnected(false);
+          const localP = getLocal<Project[]>('cms_projects');
+          const localB = getLocal<BlogPost[]>('cms_blog');
+          const localS = getLocal<SiteSettings>('cms_settings');
+          const localM = getLocal<ContactMessage[]>('cms_messages');
+          if (localP) setProjects(localP);
+          if (localB) setBlogPosts(localB);
+          if (localS) setSettings(localS);
+          if (localM) setMessages(localM);
+        }
       }
-      setSynced(true);
+      if (!cancelled) setSynced(true);
     }
     load();
-  }, []);
-
-  // ---- Persistence helpers ----
-  function getLocal<T>(key: string): T | null {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  }
-
-  function persist(key: string, data: unknown) {
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* ignore */ }
-  }
+    return () => { cancelled = true; };
+  }, [toast]);
 
   // ---- Projects ----
   const addProject = useCallback((project: Omit<Project, 'id' | 'slug' | 'date'>) => {
@@ -147,28 +159,34 @@ function useCMSStore() {
     setProjects(prev => {
       const updated = [newProject, ...prev];
       persist('cms_projects', updated);
-      addProjectToFirestore(newProject).catch(() => {});
       return updated;
     });
-  }, []);
+    addProjectToFirestore(newProject)
+      .then(() => toast('Project synced to cloud', 'success'))
+      .catch(() => toast('Project saved locally — cloud sync failed', 'error'));
+  }, [toast]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     setProjects(prev => {
       const updated = prev.map(p => (p.id === id ? { ...p, ...updates } : p));
       persist('cms_projects', updated);
-      updateProjectInFirestore(id, updates).catch(() => {});
       return updated;
     });
-  }, []);
+    updateProjectInFirestore(id, updates)
+      .then(() => toast('Project updated in cloud', 'success'))
+      .catch(() => toast('Project updated locally — cloud sync failed', 'error'));
+  }, [toast]);
 
   const deleteProject = useCallback((id: string) => {
     setProjects(prev => {
       const updated = prev.filter(p => p.id !== id);
       persist('cms_projects', updated);
-      deleteProjectFromFirestore(id).catch(() => {});
       return updated;
     });
-  }, []);
+    deleteProjectFromFirestore(id)
+      .then(() => toast('Project removed from cloud', 'success'))
+      .catch(() => toast('Project removed locally — cloud sync failed', 'error'));
+  }, [toast]);
 
   const getProject = useCallback((id: string) => projects.find(p => p.id === id), [projects]);
   const getProjectBySlug = useCallback((slug: string) => projects.find(p => p.slug === slug), [projects]);
@@ -186,10 +204,12 @@ function useCMSStore() {
     setBlogPosts(prev => {
       const updated = [newPost, ...prev];
       persist('cms_blog', updated);
-      addBlogPostToFirestore(newPost).catch(() => {});
       return updated;
     });
-  }, []);
+    addBlogPostToFirestore(newPost)
+      .then(() => toast('Blog post synced to cloud', 'success'))
+      .catch(() => toast('Blog saved locally — cloud sync failed', 'error'));
+  }, [toast]);
 
   const updateBlogPost = useCallback((id: string, updates: Partial<BlogPost>) => {
     setBlogPosts(prev => {
@@ -200,19 +220,23 @@ function useCMSStore() {
         return merged;
       });
       persist('cms_blog', updated);
-      updateBlogPostInFirestore(id, updates).catch(() => {});
       return updated;
     });
-  }, []);
+    updateBlogPostInFirestore(id, updates)
+      .then(() => toast('Blog post updated in cloud', 'success'))
+      .catch(() => toast('Blog updated locally — cloud sync failed', 'error'));
+  }, [toast]);
 
   const deleteBlogPost = useCallback((id: string) => {
     setBlogPosts(prev => {
       const updated = prev.filter(p => p.id !== id);
       persist('cms_blog', updated);
-      deleteBlogPostFromFirestore(id).catch(() => {});
       return updated;
     });
-  }, []);
+    deleteBlogPostFromFirestore(id)
+      .then(() => toast('Blog post removed from cloud', 'success'))
+      .catch(() => toast('Blog removed locally — cloud sync failed', 'error'));
+  }, [toast]);
 
   const getBlogPost = useCallback((id: string) => blogPosts.find(p => p.id === id), [blogPosts]);
   const getBlogPostBySlug = useCallback((slug: string) => blogPosts.find(p => p.slug === slug), [blogPosts]);
@@ -222,10 +246,13 @@ function useCMSStore() {
     setSettings(prev => {
       const updated = { ...prev, ...updates };
       persist('cms_settings', updated);
-      saveSettingsToFirestore(updated).catch(() => {});
       return updated;
     });
-  }, []);
+    const newSettings = { ...settings, ...updates };
+    saveSettingsToFirestore(newSettings)
+      .then(() => toast('Settings synced to cloud', 'success'))
+      .catch(() => toast('Settings saved locally — cloud sync failed', 'error'));
+  }, [settings, toast]);
 
   // ---- Messages ----
   const addMessage = useCallback((msg: Omit<ContactMessage, 'id' | 'date' | 'read'>) => {
@@ -238,27 +265,28 @@ function useCMSStore() {
     setMessages(prev => {
       const updated = [newMsg, ...prev];
       persist('cms_messages', updated);
-      addMessageToFirestore(newMsg).catch(() => {});
       return updated;
     });
+    addMessageToFirestore(newMsg)
+      .catch(() => { /* silently fail — messages aren't admin-initiated */ });
   }, []);
 
   const markMessageRead = useCallback((id: string) => {
     setMessages(prev => {
       const updated = prev.map(m => (m.id === id ? { ...m, read: true } : m));
       persist('cms_messages', updated);
-      markMessageReadInFirestore(id).catch(() => {});
       return updated;
     });
+    markMessageReadInFirestore(id).catch(() => {});
   }, []);
 
   const deleteMessage = useCallback((id: string) => {
     setMessages(prev => {
       const updated = prev.filter(m => m.id !== id);
       persist('cms_messages', updated);
-      deleteMessageFromFirestore(id).catch(() => {});
       return updated;
     });
+    deleteMessageFromFirestore(id).catch(() => {});
   }, []);
 
   // ---- Stats ----
@@ -272,7 +300,7 @@ function useCMSStore() {
   }), [projects, blogPosts, messages]);
 
   return {
-    projects, blogPosts, settings, messages, synced,
+    projects, blogPosts, settings, messages, synced, firestoreConnected,
     addProject, updateProject, deleteProject, getProject, getProjectBySlug,
     addBlogPost, updateBlogPost, deleteBlogPost, getBlogPost, getBlogPostBySlug,
     updateSettings, addMessage, markMessageRead, deleteMessage, getStats,

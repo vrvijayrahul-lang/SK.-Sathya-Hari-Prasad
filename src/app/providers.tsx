@@ -3,11 +3,14 @@
 import { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { CMSProvider } from '@/context/CMSContext';
+import { ToastProvider } from '@/components/ui/Toast';
 
-export function Providers({ children }: { children: ReactNode }) {
+export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <CMSProvider>{children}</CMSProvider>
+      <ToastProvider>
+        <CMSProvider>{children}</CMSProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

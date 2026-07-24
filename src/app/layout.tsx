@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Providers } from './providers';
+import { AppProviders } from './providers';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 
@@ -38,11 +38,11 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-[#050505] text-zinc-400 font-sans">
         <div className="grain-overlay" />
-        <Providers>
+        <AppProviders>
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />
-        </Providers>
+        </AppProviders>
       </body>
     </html>
   );
