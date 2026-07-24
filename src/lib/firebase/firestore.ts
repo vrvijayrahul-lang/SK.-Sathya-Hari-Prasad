@@ -52,7 +52,7 @@ export async function addProjectToFirestore(project: Project): Promise<void> {
 }
 
 export async function updateProjectInFirestore(id: string, data: Partial<Project>): Promise<void> {
-  await updateDoc(doc(projectsCol, id), clean({ ...data, updatedAt: Timestamp.now() }) as Record<string, unknown>);
+  await setDoc(doc(projectsCol, id), clean({ ...data, updatedAt: Timestamp.now() }) as Record<string, unknown>, { merge: true });
 }
 
 export async function deleteProjectFromFirestore(id: string): Promise<void> {
@@ -74,7 +74,7 @@ export async function addBlogPostToFirestore(post: BlogPost): Promise<void> {
 }
 
 export async function updateBlogPostInFirestore(id: string, data: Partial<BlogPost>): Promise<void> {
-  await updateDoc(doc(blogCol, id), clean({ ...data, updatedAt: Timestamp.now() }) as Record<string, unknown>);
+  await setDoc(doc(blogCol, id), clean({ ...data, updatedAt: Timestamp.now() }) as Record<string, unknown>, { merge: true });
 }
 
 export async function deleteBlogPostFromFirestore(id: string): Promise<void> {
