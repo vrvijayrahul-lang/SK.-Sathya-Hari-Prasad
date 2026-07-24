@@ -28,6 +28,15 @@ function serializeDates<T>(obj: Record<string, unknown>): T {
   return result as T;
 }
 
+/** Remove undefined values so Firestore doesn't reject them */
+function clean<T extends Record<string, unknown>>(obj: T): T {
+  const cleaned = {} as T;
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) (cleaned as Record<string, unknown>)[k] = v;
+  }
+  return cleaned;
+}
+
 // ---- PROJECTS ----
 
 const projectsCol = collection(db, 'projects');
@@ -39,11 +48,11 @@ export async function fetchProjects(): Promise<Project[]> {
 }
 
 export async function addProjectToFirestore(project: Project): Promise<void> {
-  await setDoc(doc(projectsCol, project.id), { ...project, createdAt: Timestamp.now() });
+  await setDoc(doc(projectsCol, project.id), clean({ ...project, createdAt: Timestamp.now() }) as Record<string, unknown>);
 }
 
 export async function updateProjectInFirestore(id: string, data: Partial<Project>): Promise<void> {
-  await updateDoc(doc(projectsCol, id), { ...data, updatedAt: Timestamp.now() });
+  await updateDoc(doc(projectsCol, id), clean({ ...data, updatedAt: Timestamp.now() }) as Record<string, unknown>);
 }
 
 export async function deleteProjectFromFirestore(id: string): Promise<void> {
@@ -61,11 +70,11 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
 }
 
 export async function addBlogPostToFirestore(post: BlogPost): Promise<void> {
-  await setDoc(doc(blogCol, post.id), { ...post, createdAt: Timestamp.now() });
+  await setDoc(doc(blogCol, post.id), clean({ ...post, createdAt: Timestamp.now() }) as Record<string, unknown>);
 }
 
 export async function updateBlogPostInFirestore(id: string, data: Partial<BlogPost>): Promise<void> {
-  await updateDoc(doc(blogCol, id), { ...data, updatedAt: Timestamp.now() });
+  await updateDoc(doc(blogCol, id), clean({ ...data, updatedAt: Timestamp.now() }) as Record<string, unknown>);
 }
 
 export async function deleteBlogPostFromFirestore(id: string): Promise<void> {
@@ -83,7 +92,7 @@ export async function fetchMessages(): Promise<ContactMessage[]> {
 }
 
 export async function addMessageToFirestore(message: ContactMessage): Promise<void> {
-  await setDoc(doc(messagesCol, message.id), message);
+  await setDoc(doc(messagesCol, message.id), clean(message as unknown as Record<string, unknown>));
 }
 
 export async function markMessageReadInFirestore(id: string): Promise<void> {
@@ -105,5 +114,5 @@ export async function fetchSettings(): Promise<SiteSettings | null> {
 }
 
 export async function saveSettingsToFirestore(settings: SiteSettings): Promise<void> {
-  await setDoc(settingsDocRef, { ...settings, updatedAt: Timestamp.now() });
+  await setDoc(settingsDocRef, clean({ ...settings, updatedAt: Timestamp.now() }) as Record<string, unknown>);
 }
