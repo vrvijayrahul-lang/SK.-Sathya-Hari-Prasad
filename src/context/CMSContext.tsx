@@ -163,7 +163,11 @@ function useCMSStore() {
     });
     addProjectToFirestore(newProject)
       .then(() => toast('Project synced to cloud', 'success'))
-      .catch(() => toast('Project saved locally — cloud sync failed', 'error'));
+      .catch((err: unknown) => {
+        const m = err instanceof Error ? err.message : String(err);
+        console.error('Firestore addProject failed:', m);
+        toast(`Cloud sync failed: ${m.slice(0, 80)}`, 'error');
+      });
   }, [toast]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
@@ -174,7 +178,11 @@ function useCMSStore() {
     });
     updateProjectInFirestore(id, updates)
       .then(() => toast('Project updated in cloud', 'success'))
-      .catch(() => toast('Project updated locally — cloud sync failed', 'error'));
+      .catch((err: unknown) => {
+        const m = err instanceof Error ? err.message : String(err);
+        console.error('Firestore updateProject failed:', m);
+        toast(`Cloud sync failed: ${m.slice(0, 80)}`, 'error');
+      });
   }, [toast]);
 
   const deleteProject = useCallback((id: string) => {
@@ -185,7 +193,11 @@ function useCMSStore() {
     });
     deleteProjectFromFirestore(id)
       .then(() => toast('Project removed from cloud', 'success'))
-      .catch(() => toast('Project removed locally — cloud sync failed', 'error'));
+      .catch((err: unknown) => {
+        const m = err instanceof Error ? err.message : String(err);
+        console.error('Firestore deleteProject failed:', m);
+        toast(`Cloud sync failed: ${m.slice(0, 80)}`, 'error');
+      });
   }, [toast]);
 
   const getProject = useCallback((id: string) => projects.find(p => p.id === id), [projects]);
@@ -224,7 +236,11 @@ function useCMSStore() {
     });
     updateBlogPostInFirestore(id, updates)
       .then(() => toast('Blog post updated in cloud', 'success'))
-      .catch(() => toast('Blog updated locally — cloud sync failed', 'error'));
+      .catch((err: unknown) => {
+        const m = err instanceof Error ? err.message : String(err);
+        console.error('Firestore updateBlogPost failed:', m);
+        toast(`Cloud sync failed: ${m.slice(0, 80)}`, 'error');
+      });
   }, [toast]);
 
   const deleteBlogPost = useCallback((id: string) => {
@@ -235,7 +251,11 @@ function useCMSStore() {
     });
     deleteBlogPostFromFirestore(id)
       .then(() => toast('Blog post removed from cloud', 'success'))
-      .catch(() => toast('Blog removed locally — cloud sync failed', 'error'));
+      .catch((err: unknown) => {
+        const m = err instanceof Error ? err.message : String(err);
+        console.error('Firestore deleteBlogPost failed:', m);
+        toast(`Cloud sync failed: ${m.slice(0, 80)}`, 'error');
+      });
   }, [toast]);
 
   const getBlogPost = useCallback((id: string) => blogPosts.find(p => p.id === id), [blogPosts]);
@@ -251,7 +271,11 @@ function useCMSStore() {
     const newSettings = { ...settings, ...updates };
     saveSettingsToFirestore(newSettings)
       .then(() => toast('Settings synced to cloud', 'success'))
-      .catch(() => toast('Settings saved locally — cloud sync failed', 'error'));
+      .catch((err: unknown) => {
+        const m = err instanceof Error ? err.message : String(err);
+        console.error('Firestore saveSettings failed:', m);
+        toast(`Cloud sync failed: ${m.slice(0, 80)}`, 'error');
+      });
   }, [settings, toast]);
 
   // ---- Messages ----
@@ -268,7 +292,7 @@ function useCMSStore() {
       return updated;
     });
     addMessageToFirestore(newMsg)
-      .catch(() => { /* silently fail — messages aren't admin-initiated */ });
+      .catch(() => { console.warn('Firestore addMessage failed (non-critical)'); });
   }, []);
 
   const markMessageRead = useCallback((id: string) => {
@@ -277,7 +301,9 @@ function useCMSStore() {
       persist('cms_messages', updated);
       return updated;
     });
-    markMessageReadInFirestore(id).catch(() => {});
+    markMessageReadInFirestore(id).catch((err: unknown) => {
+        console.warn('Firestore markMessageRead failed:', err instanceof Error ? err.message : String(err));
+      });
   }, []);
 
   const deleteMessage = useCallback((id: string) => {
@@ -286,7 +312,9 @@ function useCMSStore() {
       persist('cms_messages', updated);
       return updated;
     });
-    deleteMessageFromFirestore(id).catch(() => {});
+    deleteMessageFromFirestore(id).catch((err: unknown) => {
+        console.warn('Firestore markMessageRead failed:', err instanceof Error ? err.message : String(err));
+      });
   }, []);
 
   // ---- Stats ----
