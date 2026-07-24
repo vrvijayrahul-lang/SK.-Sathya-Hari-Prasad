@@ -297,6 +297,7 @@ function useCMSStore() {
     unreadMessages: messages.filter(m => !m.read).length,
     publishedPosts: blogPosts.filter(p => p.published).length,
     featuredProjects: projects.filter(p => p.featured).length,
+    totalSettings: 1,
   }), [projects, blogPosts, messages]);
 
   return {

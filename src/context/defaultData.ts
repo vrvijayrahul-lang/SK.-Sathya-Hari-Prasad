@@ -5,33 +5,92 @@ export const defaultSettings: SiteSettings = {
   title: 'Sathya — Creative Developer & Designer',
   subtitle: 'Crafting Digital Experiences',
   description:
-    'I design and develop premium digital experiences that blend cutting-edge technology with elegant design. Specializing in immersive web interfaces, interactive animations, and performance-optimized applications.',
+    'I design and develop premium digital experiences that blend cutting-edge technology with elegant design.',
   email: 'hello@sathya.dev',
   location: 'Based in Stockholm',
+  phone: '+1 (555) 123-4567',
   avatarUrl: '',
   socialLinks: {
     github: 'https://github.com',
     linkedin: 'https://linkedin.com',
     twitter: 'https://twitter.com',
     dribbble: 'https://dribbble.com',
+    youtube: '',
+    instagram: '',
   },
   skills: [
-    'React / Next.js',
-    'TypeScript',
-    'Tailwind CSS',
-    'Framer Motion',
-    'Three.js',
-    'Node.js',
-    'PostgreSQL',
-    'GraphQL',
-    'Figma',
-    'GSAP',
+    'React / Next.js', 'TypeScript', 'Tailwind CSS',
+    'Framer Motion', 'Three.js', 'Node.js',
+    'PostgreSQL', 'GraphQL', 'Figma', 'GSAP',
   ],
   aboutText:
-    'I am a creative developer with over 6 years of experience crafting digital experiences for forward-thinking brands. My work sits at the intersection of design and engineering — where every pixel is intentional and every interaction feels natural.\n\nI specialize in building premium web applications using modern technologies, with a deep focus on performance, accessibility, and delightful micro-interactions that elevate the user experience.\n\nWhen I\'m not coding, you\'ll find me exploring generative art, contributing to open-source projects, or experimenting with new creative tools.',
+    'I am a creative developer with over 6 years of experience crafting digital experiences for forward-thinking brands.\n\nI specialize in building premium web applications using modern technologies, with a deep focus on performance, accessibility, and delightful micro-interactions.\n\nWhen I\'m not coding, you\'ll find me exploring generative art or contributing to open-source projects.',
+
+  // Hero
   heroTitle: 'Crafting Digital',
   heroSubtitle: 'Experiences That Matter',
+  heroDescription: 'I design and develop premium digital experiences.',
   ctaText: 'View My Work',
+  ctaLink: '#work',
+  secondaryCtaText: 'Get in Touch',
+  showScrollIndicator: true,
+
+  // Navigation
+  customNavLinks: [
+    { label: 'Work', href: '/#work', visible: true },
+    { label: 'About', href: '/#about', visible: true },
+    { label: 'Blog', href: '/#blog', visible: true },
+    { label: 'Contact', href: '/contact', visible: true },
+  ],
+  showNavCta: true,
+  navCtaText: "Let's Talk",
+
+  // Sections
+  showWorkSection: true,
+  showSkillsSection: true,
+  showAboutSection: true,
+  showBlogSection: true,
+  showTestimonialsSection: true,
+  showContactSection: true,
+  featuredProjectsFirst: true,
+  projectsPerPage: 6,
+
+  // Blog
+  blogPostsPerPage: 6,
+  blogAuthor: 'Sathya',
+  showReadTime: true,
+
+  // Appearance
+  accentColor: '#a78bfa',
+  backgroundColor: '#050505',
+  cardStyle: 'glass' as const,
+  layoutWidth: 'wide' as const,
+  showGrainOverlay: true,
+  fontStyle: 'modern' as const,
+
+  // SEO
+  metaKeywords: 'creative developer, designer, portfolio, web development, UI/UX',
+  ogImageUrl: '',
+  twitterHandle: '@sathya',
+  googleAnalyticsId: '',
+  facebookUrl: '',
+
+  // Footer
+  copyrightText: 'All rights reserved.',
+  showFooterSocial: true,
+  footerDescription: 'Crafting premium digital experiences at the intersection of design and engineering.',
+
+  // Contact
+  contactFormEnabled: true,
+  contactEmail: 'hello@sathya.dev',
+  showContactInfo: true,
+  contactSuccessMessage: 'Thank you for reaching out. I\'ll get back to you within 24 hours.',
+  calendarLink: '',
+
+  // Maintenance
+  maintenanceMode: false,
+  maintenanceMessage: 'Site is under maintenance. Back soon!',
+  allowedIps: '',
 };
 
 export const defaultProjects: Project[] = [
