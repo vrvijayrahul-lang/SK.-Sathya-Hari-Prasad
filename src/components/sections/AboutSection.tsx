@@ -39,8 +39,18 @@ export function AboutSection() {
             className="lg:col-span-2"
           >
             <div className="doppelrand-outer w-full aspect-[3/4] max-w-sm">
-              <div className="doppelrand-inner w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/10 to-emerald-500/5">
-                <span className="text-8xl font-bold text-white/10">{settings.name.charAt(0)}</span>
+              <div className="doppelrand-inner w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/10 to-emerald-500/5 overflow-hidden relative">
+                {settings.avatarUrl ? (
+                  <img
+                    src={settings.avatarUrl}
+                    alt={settings.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ) : null}
+                <span className={`text-8xl font-bold text-white/10 ${settings.avatarUrl ? 'hidden' : ''}`}>
+                  {settings.name.charAt(0)}
+                </span>
               </div>
             </div>
 
