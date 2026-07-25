@@ -125,6 +125,26 @@ function useCMSStore() {
           if (local) setMessages(local);
         }
 
+        // Seed Firestore with localStorage data if Firestore was empty
+        if (anyConnected) {
+          if (!fsProjects?.length) {
+            const local = getLocal<Project[]>('cms_projects');
+            if (local?.length) {
+              for (const p of local) addProjectToFirestore(p).catch(() => {});
+            }
+          }
+          if (!fsPosts?.length) {
+            const local = getLocal<BlogPost[]>('cms_blog');
+            if (local?.length) {
+              for (const p of local) addBlogPostToFirestore(p).catch(() => {});
+            }
+          }
+          if (!fsSettings) {
+            const local = getLocal<SiteSettings>('cms_settings');
+            if (local) saveSettingsToFirestore(local).catch(() => {});
+          }
+        }
+
         if (!anyConnected) {
           toast('Running in local-only mode — data won\'t sync across devices', 'info');
         }

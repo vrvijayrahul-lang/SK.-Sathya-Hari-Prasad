@@ -84,21 +84,20 @@ export function ProjectsGrid() {
                         {/* Hover gradient */}
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-                        {/* Project image placeholder */}
-                        <div className="w-full aspect-video rounded-xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/5 mb-6 flex items-center justify-center overflow-hidden">
-                          {project.imageUrl ? (
+                        {/* Project image with fallback */}
+                        <div className="w-full aspect-video rounded-xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/5 mb-6 flex items-center justify-center overflow-hidden relative">
+                          {project.imageUrl && (
                             <img
                               src={project.imageUrl}
                               alt={project.title}
-                              className="w-full h-full object-cover"
+                              className="absolute inset-0 w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              loading="lazy"
                             />
-                          ) : (
-                            <div className="text-center">
-                              <span className="text-3xl font-bold text-white/10 tracking-tight">
-                                {project.title.charAt(0)}
-                              </span>
-                            </div>
                           )}
+                          <span className="text-3xl font-bold text-white/10 tracking-tight">
+                            {project.title.charAt(0)}
+                          </span>
                         </div>
 
                         {/* Content */}

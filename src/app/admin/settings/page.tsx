@@ -9,16 +9,23 @@ import type { NavLink } from '@/types';
 
 const TABS = ['Profile', 'Hero & Sections', 'Navigation', 'Appearance', 'SEO', 'Footer & Contact', 'Maintenance'];
 
+const DEFAULT_NAV_LINKS: NavLink[] = [
+  { label: 'Work', href: '/#work', visible: true },
+  { label: 'About', href: '/#about', visible: true },
+  { label: 'Blog', href: '/#blog', visible: true },
+  { label: 'Contact', href: '/contact', visible: true },
+];
+
 export default function AdminSettings() {
   const { settings, updateSettings } = useCMS();
   const [activeTab, setActiveTab] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({ ...settings });
-  const [navLinks, setNavLinks] = useState<NavLink[]>(settings.customNavLinks);
+  const [navLinks, setNavLinks] = useState<NavLink[]>(settings.customNavLinks ?? DEFAULT_NAV_LINKS);
 
   useEffect(() => {
     setFormData({ ...settings });
-    setNavLinks(settings.customNavLinks);
+    setNavLinks(settings.customNavLinks ?? DEFAULT_NAV_LINKS);
   }, [settings]);
 
   const handleSubmit = (e: FormEvent) => {
